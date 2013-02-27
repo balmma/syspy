@@ -1,0 +1,56 @@
+#! ruby
+
+$:.unshift File.join(File.dirname(File.dirname(__FILE__)),"lib")
+
+require "rubygems"
+require "syspy"
+require "time"
+
+module Syspy  
+    if(ARGV.size != 3)
+      puts "Usage: sudo ruby syspy.rb <interface> <destination_ip> <destination_port>"
+      exit(1)
+    end
+      
+    if(`id -u`.strip != "0")
+      puts "Has to be run as root"
+      exit(2)
+    end
+
+    INTERFACE = ARGV[0]
+    DST = ARGV[1]
+    DST_PORT = ARGV[2]
+
+    # INTERFACE = "eth0"
+    # DST = "192.168.1.6"
+    # DST_PORT = "2048"    
+
+    stream = TdsPackageStream.new(INTERFACE,DST,DST_PORT)
+    stream.each_package(){|package|
+      if(package.instance_of?(TdsLanguage))
+        statement = package.language_text
+        replaced_statement = statement.gsub("\r\n","\n").gsub("\n"," ").gsub("\t"," ").squeeze(" ").strip
+        
+        index = 0
+        if(package.tds_params)
+          params = package.tds_params.parameters      
+          statement.scan(/@sql\d+[^ ]+/){|match|
+            param = params[index]
+            if(param.instance_of?(String))
+              replaced_statement.gsub!(match,"\"#{param}\"")
+            elsif(param.kind_of?(Numeric))
+              replaced_statement.gsub!(match,param.to_s)
+            elsif(param.instance_of?(Time))
+              replaced_statement.gsub!(match,"\"#{param.strftime("%Y%m%d %H:%M:%S")}\"")                    
+            elsif(param.nil?)
+              replaced_statement.gsub!(match,"NULL")
+            else
+              Log.warn("Non replacable parameter: #{match}: #{param.inspect}")
+            end
+            index += 1
+          }
+        end
+        Log.info("Replaced parameters: #{index}\n\n#{replaced_statement}\n------------------------------------------------------")   
+      end
+    } 
+end  
