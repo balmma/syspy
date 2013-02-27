@@ -1,6 +1,3 @@
-syspy
-=====
-
 Captures TDS (Sybase / MSSQL) packages directly from a network interface.
 
 Currently, only TDS_LANGUAGE (Query Statements) and their TDS_PARAMFMT/2 TDS_PARAMS are parsed.
