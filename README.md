@@ -7,7 +7,7 @@ There are still many data types missing.
 Also replaces parameters from prepared statements (e.g. @sql9_object_id is going to be replaced by the corresponding value from TDS_PARAMS).
 
 Usage:
-sudo syspy <interface> <destination_ip> <destination_port>
+sudo syspy interface destination_ip destination_port
 
 Example:
 sudo syspy eth0 192.168.1.6 2048
